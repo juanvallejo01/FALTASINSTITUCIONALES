@@ -1,0 +1,20 @@
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Faltas Institucionales — Gestión de Asistencia",
+  description: "Plataforma multiinstitución de gestión y seguimiento de asistencia escolar (DEMO)",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="es">
+      <body>{children}</body>
+    </html>
+  );
+}

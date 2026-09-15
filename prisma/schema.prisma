@@ -1,0 +1,516 @@
+// Plataforma de Gestión de Asistencia — Modelo de datos multiinstitución
+// Diseño: aislamiento lógico por institutionId en toda entidad operativa.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------------
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN_INSTITUCIONAL
+  COORDINADOR
+  DOCENTE
+  GESTOR_SEGUIMIENTO
+}
+
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AttendanceStatusValue {
+  PRESENTE
+  AUSENTE
+  TARDE
+  JUSTIFICADO
+}
+
+enum SessionStatus {
+  PENDIENTE
+  REGISTRADA
+}
+
+enum AlertLevel {
+  NORMAL
+  SEGUIMIENTO
+  ALERTA
+}
+
+enum AlertStatus {
+  ABIERTA
+  CERRADA
+}
+
+enum FollowUpStatus {
+  PENDIENTE
+  EN_GESTION
+  CONTACTADO
+  NO_CONTACTADO
+  JUSTIFICADO
+  CERRADO
+}
+
+enum ContactType {
+  LLAMADA
+  MENSAJE
+  PRESENCIAL
+  OTRO
+}
+
+enum ContactResult {
+  ACUDIENTE_CONTACTADO
+  NO_CONTESTO
+  NUMERO_INVALIDO
+  SOLICITA_DEVOLUCION_LLAMADA
+  AUSENCIA_JUSTIFICADA
+  OTRO
+}
+
+enum DayOfWeek {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+  DOMINGO
+}
+
+// ---------------------------------------------------------------------------
+// CORE: INSTITUCIONES
+// ---------------------------------------------------------------------------
+
+model Institution {
+  id      String       @id @default(cuid())
+  name    String
+  code    String       @unique
+  status  EntityStatus @default(ACTIVE)
+  address String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  campuses        Campus[]
+  academicPeriods AcademicPeriod[]
+  courses         Course[]
+  subjects        Subject[]
+  teachers        Teacher[]
+  students        Student[]
+  users           User[]
+  alertConfigs    AlertConfig[]
+  alerts          Alert[]
+  followUpCases   FollowUpCase[]
+  auditLogs       AuditLog[]
+
+  @@index([status])
+}
+
+model Campus {
+  id            String       @id @default(cuid())
+  institutionId String
+  institution   Institution  @relation(fields: [institutionId], references: [id])
+  name          String
+  address       String?
+  status        EntityStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  courses  Course[]
+  teachers Teacher[]
+  students Student[]
+
+  @@index([institutionId])
+}
+
+model AcademicPeriod {
+  id            String       @id @default(cuid())
+  institutionId String
+  institution   Institution  @relation(fields: [institutionId], references: [id])
+  name          String
+  startDate     DateTime
+  endDate       DateTime
+  status        EntityStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courses Course[]
+
+  @@index([institutionId])
+}
+
+enum Jornada {
+  MANANA
+  TARDE
+  NOCHE
+  UNICA
+}
+
+model Course {
+  id               String         @id @default(cuid())
+  institutionId    String
+  institution      Institution    @relation(fields: [institutionId], references: [id])
+  campusId         String
+  campus           Campus         @relation(fields: [campusId], references: [id])
+  academicPeriodId String
+  academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+  name             String // ej. "8-02"
+  jornada          Jornada        @default(UNICA)
+  status           EntityStatus   @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  students           Student[]
+  teacherAssignments TeacherCourseSubject[]
+  attendanceSessions AttendanceSession[]
+
+  @@unique([institutionId, name, academicPeriodId])
+  @@index([institutionId])
+  @@index([campusId])
+}
+
+model Subject {
+  id            String       @id @default(cuid())
+  institutionId String
+  institution   Institution  @relation(fields: [institutionId], references: [id])
+  name          String // ej. "Matemáticas"
+  status        EntityStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacherAssignments TeacherCourseSubject[]
+  attendanceSessions AttendanceSession[]
+
+  @@unique([institutionId, name])
+  @@index([institutionId])
+}
+
+// ---------------------------------------------------------------------------
+// USUARIOS Y AUTENTICACIÓN
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  passwordHash  String
+  role          Role
+  // null para SUPER_ADMIN (alcance global); obligatorio para el resto de roles
+  // operativos de institución. GESTOR_SEGUIMIENTO puede tener alcance global
+  // (null) o estar limitado a una institución, según configuración.
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  name          String
+  status        EntityStatus @default(ACTIVE)
+
+  failedLoginAttempts    Int       @default(0)
+  lockedUntil            DateTime?
+  passwordResetToken     String?   @unique
+  passwordResetExpiresAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  teacherProfile            Teacher?
+  auditLogs                 AuditLog[]
+  registeredSessions        AttendanceSession[] @relation("RegisteredBy")
+  attendanceRecordsRecorded AttendanceRecord[]  @relation("RecordedBy")
+  followUpContacts          FollowUpContact[]
+  assignedCases             FollowUpCase[]      @relation("AssignedTo")
+
+  @@index([institutionId])
+  @@index([role])
+}
+
+// ---------------------------------------------------------------------------
+// DOCENTES
+// ---------------------------------------------------------------------------
+
+model Teacher {
+  id            String       @id @default(cuid())
+  userId        String       @unique
+  user          User         @relation(fields: [userId], references: [id])
+  institutionId String
+  institution   Institution  @relation(fields: [institutionId], references: [id])
+  campusId      String
+  campus        Campus       @relation(fields: [campusId], references: [id])
+  firstName     String
+  lastName      String
+  internalCode  String
+  phone         String?
+  status        EntityStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  assignments        TeacherCourseSubject[]
+  attendanceSessions AttendanceSession[]
+
+  @@unique([institutionId, internalCode])
+  @@index([institutionId])
+  @@index([campusId])
+}
+
+model TeacherCourseSubject {
+  id        String    @id @default(cuid())
+  teacherId String
+  teacher   Teacher   @relation(fields: [teacherId], references: [id])
+  courseId  String
+  course    Course    @relation(fields: [courseId], references: [id])
+  subjectId String
+  subject   Subject   @relation(fields: [subjectId], references: [id])
+  dayOfWeek DayOfWeek
+  startTime String // "08:00"
+  endTime   String // "09:00"
+
+  createdAt DateTime @default(now())
+
+  @@unique([teacherId, courseId, subjectId, dayOfWeek, startTime])
+  @@index([teacherId])
+  @@index([courseId])
+}
+
+// ---------------------------------------------------------------------------
+// ESTUDIANTES Y ACUDIENTES
+// ---------------------------------------------------------------------------
+
+model Guardian {
+  id           String  @id @default(cuid())
+  firstName    String
+  lastName     String
+  phone        String
+  email        String?
+  relationship String // ej. "Madre", "Padre", "Tutor"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students Student[]
+}
+
+model Student {
+  id            String       @id @default(cuid())
+  institutionId String
+  institution   Institution  @relation(fields: [institutionId], references: [id])
+  campusId      String
+  campus        Campus       @relation(fields: [campusId], references: [id])
+  courseId      String
+  course        Course       @relation(fields: [courseId], references: [id])
+  guardianId    String?
+  guardian      Guardian?    @relation(fields: [guardianId], references: [id])
+  firstName     String
+  lastName      String
+  internalCode  String
+  jornada       Jornada      @default(UNICA)
+  status        EntityStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  attendanceRecords AttendanceRecord[]
+  alerts            Alert[]
+  followUpCases     FollowUpCase[]
+
+  @@unique([institutionId, internalCode])
+  @@index([institutionId])
+  @@index([courseId])
+  @@index([campusId])
+}
+
+// ---------------------------------------------------------------------------
+// ASISTENCIA
+// ---------------------------------------------------------------------------
+
+// Una "clase" concreta: curso + materia + docente + fecha + horario.
+model AttendanceSession {
+  id             String        @id @default(cuid())
+  institutionId  String
+  courseId       String
+  course         Course        @relation(fields: [courseId], references: [id])
+  subjectId      String
+  subject        Subject       @relation(fields: [subjectId], references: [id])
+  teacherId      String
+  teacher        Teacher       @relation(fields: [teacherId], references: [id])
+  date           DateTime      @db.Date
+  startTime      String
+  status         SessionStatus @default(PENDIENTE)
+  registeredAt   DateTime?
+  registeredById String?
+  registeredBy   User?         @relation("RegisteredBy", fields: [registeredById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  records AttendanceRecord[]
+
+  @@unique([courseId, subjectId, teacherId, date, startTime])
+  @@index([institutionId])
+  @@index([teacherId])
+  @@index([courseId])
+  @@index([date])
+  @@index([status])
+}
+
+model AttendanceRecord {
+  id           String                @id @default(cuid())
+  sessionId    String
+  session      AttendanceSession     @relation(fields: [sessionId], references: [id])
+  studentId    String
+  student      Student               @relation(fields: [studentId], references: [id])
+  status       AttendanceStatusValue @default(PRESENTE)
+  observation  String?
+  recordedById String
+  recordedBy   User                  @relation("RecordedBy", fields: [recordedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+  @@index([sessionId])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// ALERTAS
+// ---------------------------------------------------------------------------
+
+// Configuración de umbrales de alerta. institutionId = null -> configuración
+// global por defecto, usada si la institución no define la suya propia.
+model AlertConfig {
+  id                   String       @id @default(cuid())
+  institutionId        String?
+  institution          Institution? @relation(fields: [institutionId], references: [id])
+  seguimientoThreshold Int          @default(3) // ausencias acumuladas -> SEGUIMIENTO
+  alertaThreshold      Int          @default(5) // ausencias acumuladas -> ALERTA
+  consecutiveThreshold Int          @default(3) // ausencias consecutivas -> ALERTA
+  minAttendancePercent Int          @default(80) // % mínimo aceptable
+  periodDays           Int          @default(30) // ventana de cálculo en días
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([institutionId])
+}
+
+model Alert {
+  id                   String      @id @default(cuid())
+  institutionId        String
+  institution          Institution @relation(fields: [institutionId], references: [id])
+  studentId            String
+  student              Student     @relation(fields: [studentId], references: [id])
+  level                AlertLevel
+  status               AlertStatus @default(ABIERTA)
+  absenceCount         Int
+  consecutiveAbsences  Int
+  attendancePercentage Float
+  lastAbsenceDate      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  followUpCases FollowUpCase[]
+
+  @@index([institutionId])
+  @@index([studentId])
+  @@index([status])
+  @@index([level])
+}
+
+// ---------------------------------------------------------------------------
+// SEGUIMIENTO (separado de datos operativos de asistencia)
+// ---------------------------------------------------------------------------
+
+model FollowUpCase {
+  id            String         @id @default(cuid())
+  institutionId String
+  institution   Institution    @relation(fields: [institutionId], references: [id])
+  studentId     String
+  student       Student        @relation(fields: [studentId], references: [id])
+  alertId       String?
+  alert         Alert?         @relation(fields: [alertId], references: [id])
+  status        FollowUpStatus @default(PENDIENTE)
+  assignedToId  String?
+  assignedTo    User?          @relation("AssignedTo", fields: [assignedToId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  contacts FollowUpContact[]
+
+  @@index([institutionId])
+  @@index([studentId])
+  @@index([status])
+}
+
+model FollowUpContact {
+  id               String        @id @default(cuid())
+  caseId           String
+  case             FollowUpCase  @relation(fields: [caseId], references: [id])
+  gestorId         String
+  gestor           User          @relation(fields: [gestorId], references: [id])
+  contactDate      DateTime      @default(now())
+  type             ContactType
+  result           ContactResult
+  observation      String?
+  nextFollowUpDate DateTime?
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  deletedBy String?
+
+  @@index([caseId])
+}
+
+// ---------------------------------------------------------------------------
+// AUDITORÍA (inmutable para usuarios normales; solo INSERT desde la app)
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id            String       @id @default(cuid())
+  userId        String?
+  user          User?        @relation(fields: [userId], references: [id])
+  role          Role?
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  action        String // ej. "LOGIN", "ATTENDANCE_CREATE", "ATTENDANCE_UPDATE"
+  resource      String // ej. "AttendanceRecord"
+  resourceId    String?
+  oldValue      Json?
+  newValue      Json?
+  ip            String?
+  userAgent     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([institutionId])
+  @@index([userId])
+  @@index([action])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+}
