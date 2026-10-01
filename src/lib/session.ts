@@ -19,6 +19,11 @@ function getSecretKey(): Uint8Array {
   if (!secret || secret.length < 16) {
     throw new Error("AUTH_SECRET no está configurado o es demasiado corto.");
   }
+  // En producción no se acepta el valor de ejemplo de .env.example ni uno corto:
+  // con él cualquiera podría firmar sesiones válidas.
+  if (process.env.NODE_ENV === "production" && (secret.length < 32 || secret.startsWith("CHANGE_ME"))) {
+    throw new Error("AUTH_SECRET de producción inválido: genera uno con `openssl rand -base64 48`.");
+  }
   return new TextEncoder().encode(secret);
 }
 

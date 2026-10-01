@@ -13,3 +13,9 @@ test-results/
 /prisma/dev.db
 .turbo/
 next-env.d.ts
+
+# TypeScript incremental (se regenera solo; versionarlo causa conflictos)
+*.tsbuildinfo
+
+# Vercel
+.vercel

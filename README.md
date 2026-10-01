@@ -158,6 +158,46 @@ npm run test             # pruebas unitarias (puras, sin servidor ni DB viva)
 npm run test:integration # pruebas de integración/autorización (requiere dev+seed corriendo)
 ```
 
+### 9.1 Despliegue en Vercel
+
+El proyecto ya está preparado: `npm run build` ejecuta `prisma generate` antes de
+`next build` (y `postinstall` también lo genera), así que Vercel compila sin pasos extra.
+
+**1. Base de datos PostgreSQL en la nube**
+
+En Vercel: *Storage → Create Database → Neon (Postgres)* y conéctala al proyecto.
+Vercel crea `DATABASE_URL` (con pool de conexiones) y `DATABASE_URL_UNPOOLED` (directa).
+Agrega `&pgbouncer=true` al final de `DATABASE_URL` para que Prisma funcione con el pool.
+
+**2. Variables de entorno** (*Project → Settings → Environment Variables*)
+
+| Variable | Valor |
+|---|---|
+| `DATABASE_URL` | La URL con pool de Neon + `&pgbouncer=true` |
+| `AUTH_SECRET` | Resultado de `openssl rand -base64 48` (en producción se exige ≥ 32 caracteres) |
+| `APP_TIMEZONE` | `America/Bogota` |
+| `SHOW_DEMO_LOGIN` | `true` solo si es un despliegue de pruebas (muestra las cuentas DEMO en el login) |
+
+No configures `NODE_ENV`: Vercel lo define solo.
+
+**3. Crear las tablas y los datos DEMO (una sola vez, desde tu computador)**
+
+Usa la URL **directa** (`DATABASE_URL_UNPOOLED`), porque las migraciones no funcionan a
+través del pool:
+
+```bash
+DATABASE_URL="<URL directa de Neon>" npm run prisma:deploy   # crea las tablas
+DATABASE_URL="<URL directa de Neon>" npm run seed            # opcional: datos DEMO
+```
+
+Cada vez que se agregue una migración nueva, repite el primer comando antes de desplegar.
+
+**4. Desplegar**
+
+Importa el repositorio en Vercel (*Add New → Project*). Detecta Next.js
+automáticamente; no hay que cambiar el comando de build ni la carpeta de salida.
+Cada `git push` a la rama principal genera un nuevo despliegue.
+
 ## 10. Modelo de datos
 
 Entidades principales (`prisma/schema.prisma`): `Institution`, `Campus`,
