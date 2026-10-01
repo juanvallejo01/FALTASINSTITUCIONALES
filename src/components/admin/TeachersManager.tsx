@@ -317,12 +317,12 @@ export function TeachersManager({
         <table className="w-full text-left text-[15px]">
           <thead className="table-head">
             <tr>
-              <th className="hidden px-4 py-2.5 lg:table-cell">Código</th>
-              <th className="px-4 py-2.5">Nombre</th>
-              <th className="hidden px-4 py-2.5 md:table-cell">Correo</th>
-              <th className="hidden px-4 py-2.5 md:table-cell">Sede</th>
-              <th className="hidden px-4 py-2.5 text-right sm:table-cell">Cursos</th>
-              <th className="px-4 py-2.5">
+              <th className="hidden px-3 py-2.5 sm:px-4 lg:table-cell">Código</th>
+              <th className="px-3 py-2.5 sm:px-4">Nombre</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 md:table-cell">Correo</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 md:table-cell">Sede</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 text-right sm:table-cell">Cursos</th>
+              <th className="px-3 py-2.5 sm:px-4">
                 <span className="sr-only">Acciones</span>
               </th>
             </tr>
@@ -330,16 +330,16 @@ export function TeachersManager({
           <tbody className="divide-y divide-slate-100">
             {initialTeachers.map((t) => (
               <tr key={t.id}>
-                <td className="hidden px-4 py-2.5 text-slate-500 lg:table-cell">{t.internalCode}</td>
-                <td className="px-4 py-2.5">
+                <td className="hidden px-3 py-2.5 sm:px-4 text-slate-500 lg:table-cell">{t.internalCode}</td>
+                <td className="px-3 py-2.5 sm:px-4">
                   <p className="font-semibold text-slate-900">
                     {t.lastName} {t.firstName}
                   </p>
                   <p className="truncate text-[13px] text-slate-500 md:hidden">{t.email}</p>
                 </td>
-                <td className="hidden px-4 py-2.5 md:table-cell">{t.email}</td>
-                <td className="hidden px-4 py-2.5 md:table-cell">{t.campusName}</td>
-                <td className="hidden px-4 py-2.5 text-right tabular-nums sm:table-cell">{t.courseCount}</td>
+                <td className="hidden px-3 py-2.5 sm:px-4 md:table-cell">{t.email}</td>
+                <td className="hidden px-3 py-2.5 sm:px-4 md:table-cell">{t.campusName}</td>
+                <td className="hidden px-3 py-2.5 sm:px-4 text-right tabular-nums sm:table-cell">{t.courseCount}</td>
                 <td className="whitespace-nowrap px-2 py-1 text-right">
                   <RowActions onEdit={() => startEdit(t)} onDelete={() => handleDelete(t)} />
                 </td>

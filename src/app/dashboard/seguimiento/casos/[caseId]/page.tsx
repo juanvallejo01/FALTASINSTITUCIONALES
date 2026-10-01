@@ -37,7 +37,7 @@ export default async function CaseDetailPage({
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {data.alert && level && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Metric label="Nivel" value={level.label} tone={level.tone === "danger" ? "text-red-600" : "text-amber-600"} />
@@ -54,17 +54,19 @@ export default async function CaseDetailPage({
           <section>
             <h2 className="section-title">Acudiente</h2>
             {data.guardian ? (
-              <div className="card flex items-center gap-3 p-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                  <Icon name="user" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-slate-900">{data.guardian.name}</p>
-                  <p className="text-[13px] text-slate-500">
-                    {data.guardian.relationship} · {data.guardian.phone}
-                  </p>
+              <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    <Icon name="user" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-900">{data.guardian.name}</p>
+                    <p className="text-[13px] text-slate-500">
+                      {data.guardian.relationship} · {data.guardian.phone}
+                    </p>
+                  </div>
                 </div>
-                <a href={`tel:${data.guardian.phone.replace(/[^\d+]/g, "")}`} className="btn-primary shrink-0 px-4">
+                <a href={`tel:${data.guardian.phone.replace(/[^\d+]/g, "")}`} className="btn-primary w-full shrink-0 px-4 sm:w-auto">
                   <Icon name="phone" className="h-[18px] w-[18px]" />
                   Llamar
                 </a>
@@ -110,12 +112,15 @@ export default async function CaseDetailPage({
                   const st = labelOf(ATTENDANCE_STATUS, h.status);
                   return (
                     <li key={i} className="list-row">
-                      <span className="w-20 shrink-0 text-[13px] font-medium text-slate-500">
+                      <span className="hidden w-20 shrink-0 text-[13px] font-medium text-slate-500 sm:inline">
                         {formatShortDateOnlyEs(h.date)}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-slate-900">{h.subjectName}</p>
-                        <p className="truncate text-[13px] text-slate-500">{h.teacherName}</p>
+                        <p className="truncate text-[13px] text-slate-500">
+                          <span className="sm:hidden">{formatShortDateOnlyEs(h.date)} · </span>
+                          {h.teacherName}
+                        </p>
                       </div>
                       <Badge tone={st.tone}>{st.label}</Badge>
                     </li>
@@ -126,7 +131,7 @@ export default async function CaseDetailPage({
           </section>
         </div>
 
-        <aside className="hidden lg:block">
+        <aside className="hidden min-w-0 lg:block">
           <div className="sticky top-20">
             <CaseActions key={data.status} caseId={data.id} currentStatus={data.status} />
           </div>
@@ -138,9 +143,11 @@ export default async function CaseDetailPage({
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="card p-3.5">
-      <p className="text-[12px] font-medium text-slate-500">{label}</p>
-      <p className={`mt-1 text-[20px] font-bold tabular-nums tracking-tight ${tone ?? "text-slate-900"}`}>{value}</p>
+    <div className="card min-w-0 p-3.5">
+      <p className="truncate text-[12px] font-medium text-slate-500">{label}</p>
+      <p className={`mt-1 truncate text-[20px] font-bold tabular-nums tracking-tight ${tone ?? "text-slate-900"}`}>
+        {value}
+      </p>
     </div>
   );
 }

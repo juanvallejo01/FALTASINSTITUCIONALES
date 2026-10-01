@@ -287,11 +287,11 @@ export function StudentsManager({
         <table className="w-full text-left text-[15px]">
           <thead className="table-head">
             <tr>
-              <th className="hidden px-4 py-2.5 md:table-cell">Código</th>
-              <th className="px-4 py-2.5">Nombre</th>
-              <th className="px-4 py-2.5">Curso</th>
-              <th className="hidden px-4 py-2.5 md:table-cell">Acudiente</th>
-              <th className="px-4 py-2.5">
+              <th className="hidden px-3 py-2.5 sm:px-4 md:table-cell">Código</th>
+              <th className="px-3 py-2.5 sm:px-4">Nombre</th>
+              <th className="px-3 py-2.5 sm:px-4">Curso</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 md:table-cell">Acudiente</th>
+              <th className="px-3 py-2.5 sm:px-4">
                 <span className="sr-only">Acciones</span>
               </th>
             </tr>
@@ -299,15 +299,15 @@ export function StudentsManager({
           <tbody className="divide-y divide-slate-100">
             {initialStudents.map((s) => (
               <tr key={s.id}>
-                <td className="hidden px-4 py-2.5 text-slate-500 md:table-cell">{s.internalCode}</td>
-                <td className="px-4 py-2.5">
+                <td className="hidden px-3 py-2.5 sm:px-4 text-slate-500 md:table-cell">{s.internalCode}</td>
+                <td className="px-3 py-2.5 sm:px-4">
                   <p className="font-semibold text-slate-900">
                     {s.lastName} {s.firstName}
                   </p>
                   <p className="text-[13px] text-slate-500 md:hidden">{s.internalCode}</p>
                 </td>
-                <td className="px-4 py-2.5">{s.courseName}</td>
-                <td className="hidden px-4 py-2.5 md:table-cell">{s.guardianName ?? "—"}</td>
+                <td className="px-3 py-2.5 sm:px-4">{s.courseName}</td>
+                <td className="hidden px-3 py-2.5 sm:px-4 md:table-cell">{s.guardianName ?? "—"}</td>
                 <td className="whitespace-nowrap px-2 py-1 text-right">
                   <RowActions onEdit={() => startEdit(s)} onDelete={() => handleDelete(s)} />
                 </td>

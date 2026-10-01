@@ -100,8 +100,11 @@ export function LoginForm({
             y el input queda en medio del orden de tabulación (email -> este
             link -> password), rompiendo Tab/Enter para completar el login
             con teclado. Bug real detectado probando el flujo con teclado. */}
-          <div className="mt-1.5 text-right">
-            <Link href="/forgot-password" className="text-xs text-brand-600 hover:underline">
+          <div className="-mb-2 mt-0.5 text-right">
+            <Link
+            href="/forgot-password"
+            className="-mr-2 inline-flex min-h-[44px] items-center px-2 text-[13px] font-medium text-brand-600 hover:underline"
+          >
               ¿Olvidaste tu contraseña?
             </Link>
           </div>

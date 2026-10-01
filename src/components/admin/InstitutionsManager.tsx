@@ -165,12 +165,12 @@ export function InstitutionsManager({ initialInstitutions }: { initialInstitutio
         <table className="w-full text-left text-[15px]">
           <thead className="table-head">
             <tr>
-              <th className="px-4 py-2.5">Institución</th>
-              <th className="hidden px-4 py-2.5 text-right md:table-cell">Estudiantes</th>
-              <th className="hidden px-4 py-2.5 text-right md:table-cell">Docentes</th>
-              <th className="hidden px-4 py-2.5 text-right md:table-cell">Cursos</th>
-              <th className="px-4 py-2.5">Activa</th>
-              <th className="px-4 py-2.5">
+              <th className="px-3 py-2.5 sm:px-4">Institución</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 text-right md:table-cell">Estudiantes</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 text-right md:table-cell">Docentes</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 text-right md:table-cell">Cursos</th>
+              <th className="px-3 py-2.5 sm:px-4">Activa</th>
+              <th className="px-3 py-2.5 sm:px-4">
                 <span className="sr-only">Acciones</span>
               </th>
             </tr>
@@ -178,7 +178,7 @@ export function InstitutionsManager({ initialInstitutions }: { initialInstitutio
           <tbody className="divide-y divide-slate-100">
             {initialInstitutions.map((i) => (
               <tr key={i.id}>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5 sm:px-4">
                   <p className="font-semibold text-slate-900">{i.name}</p>
                   <p className="text-[13px] text-slate-500">
                     {i.code}
@@ -188,16 +188,16 @@ export function InstitutionsManager({ initialInstitutions }: { initialInstitutio
                     </span>
                   </p>
                 </td>
-                <td className="hidden px-4 py-2.5 text-right tabular-nums md:table-cell">
+                <td className="hidden px-3 py-2.5 sm:px-4 text-right tabular-nums md:table-cell">
                   {i.counts.students}
                 </td>
-                <td className="hidden px-4 py-2.5 text-right tabular-nums md:table-cell">
+                <td className="hidden px-3 py-2.5 sm:px-4 text-right tabular-nums md:table-cell">
                   {i.counts.teachers}
                 </td>
-                <td className="hidden px-4 py-2.5 text-right tabular-nums md:table-cell">
+                <td className="hidden px-3 py-2.5 sm:px-4 text-right tabular-nums md:table-cell">
                   {i.counts.courses}
                 </td>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5 sm:px-4">
                   <Switch
                     checked={i.status === "ACTIVE"}
                     onChange={() => toggleStatus(i)}

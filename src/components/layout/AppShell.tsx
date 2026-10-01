@@ -43,17 +43,17 @@ export function AppShell({
   const immersive = nav.immersive?.some((prefix) => pathname.startsWith(prefix)) ?? false;
 
   return (
-    <div className="min-h-dvh bg-canvas">
-      <header className="sticky top-0 z-30 border-b border-black/[0.06] bg-white/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-30 bg-white/75 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6 xl:gap-6">
           <Link href={rootHref} className="flex shrink-0 items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-gradient-to-b from-brand-500 to-brand-700 text-white shadow-sm">
+            <span className="app-icon flex h-8 w-8 items-center justify-center rounded-[9px] shadow-sm">
               <Icon name="checklist" className="h-[18px] w-[18px]" strokeWidth={2.2} />
             </span>
             <span className="text-[15px] font-semibold text-slate-900">{nav.title}</span>
           </Link>
 
-          <nav aria-label="Secciones" className="hidden flex-1 items-center gap-1 md:flex">
+          <nav aria-label="Secciones" className="hidden min-w-0 flex-1 items-center gap-0.5 lg:flex">
             {desktopLinks.map((link) => {
               const active = isActive(pathname, link.href, rootHref);
               return (
@@ -61,7 +61,7 @@ export function AppShell({
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded-full px-3 py-1.5 text-[14px] font-medium transition ${
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[14px] font-medium transition ${
                     active ? "bg-slate-900/[0.06] text-slate-900" : "text-slate-500 hover:text-slate-900"
                   }`}
                 >
@@ -74,26 +74,27 @@ export function AppShell({
           <div className="ml-auto flex items-center gap-1">
             <Link
               href={nav.profileHref}
-              className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 transition hover:bg-slate-100 md:pr-3"
+              className="flex items-center gap-2 rounded-full p-1 transition hover:bg-slate-100 xl:pr-3"
               title="Mi perfil"
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[12px] font-semibold text-slate-700">
                 {initials(userName)}
               </span>
-              <span className="hidden max-w-[16rem] truncate text-[14px] text-slate-600 md:inline">
+              <span className="hidden max-w-[14rem] truncate text-[14px] text-slate-600 xl:inline">
                 {userName}
               </span>
             </Link>
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <LogoutButton variant="icon" />
             </div>
           </div>
         </div>
+        <div className="accent-line" aria-hidden="true" />
       </header>
 
       <main
-        className={`mx-auto max-w-6xl px-4 pt-6 ${
-          immersive ? "pb-10" : "pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-12"
+        className={`mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8 ${
+          immersive ? "pb-10" : "pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-12"
         }`}
       >
         {children}
@@ -102,9 +103,9 @@ export function AppShell({
       {!immersive && (
         <nav
           aria-label="Pestañas"
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 lg:hidden"
         >
-          <div className="mx-auto flex max-w-md">
+          <div className="mx-auto flex max-w-lg">
             {tabs.map((link) => (
               <TabItem key={link.href} link={link} active={isActive(pathname, link.href, rootHref)} />
             ))}
@@ -165,14 +166,14 @@ function MoreSheet({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Más secciones">
+    <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Más secciones">
       <button
         type="button"
         aria-label="Cerrar"
         onClick={onClose}
         className="absolute inset-0 animate-fade-in bg-black/30"
       />
-      <div className="absolute inset-x-0 bottom-0 animate-sheet-in rounded-t-3xl bg-canvas px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2 shadow-float">
+      <div className="absolute inset-x-0 bottom-0 mx-auto max-w-lg animate-sheet-in rounded-t-3xl bg-canvas px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2 shadow-float">
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300" />
         <div className="list-group">
           {links.map((link) => {

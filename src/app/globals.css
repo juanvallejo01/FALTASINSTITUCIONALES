@@ -11,6 +11,33 @@ body {
   @apply bg-canvas text-[15px] text-slate-900 antialiased;
 }
 
+/*
+ * Fondo institucional: velos muy suaves de azul (arriba a la izquierda) y verde
+ * (arriba a la derecha) sobre el gris del sistema. Va fijo detrás de todo, así que
+ * las tarjetas blancas mantienen su contraste y el texto sigue igual de legible.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(52rem 34rem at -8% -12%, rgba(0, 122, 255, 0.12), transparent 62%),
+    radial-gradient(46rem 30rem at 108% -6%, rgba(16, 185, 129, 0.14), transparent 60%),
+    radial-gradient(40rem 26rem at 50% 115%, rgba(0, 122, 255, 0.05), transparent 65%);
+}
+
+/* Acento institucional: una línea finísima azul → verde. */
+.accent-line {
+  @apply h-px bg-gradient-to-r from-brand-500/0 via-brand-500/35 to-emerald-500/35;
+}
+
+/* Ícono de la app: azul institucional que se funde hacia verde. */
+.app-icon {
+  @apply bg-gradient-to-br from-brand-600 via-brand-500 to-emerald-500 text-white;
+}
+
 :focus-visible {
   @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-canvas;
 }

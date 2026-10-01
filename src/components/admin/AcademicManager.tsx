@@ -220,20 +220,20 @@ function CampusesSection({ campuses, onChange }: { campuses: Campus[]; onChange:
         <table className="w-full text-left text-[15px]">
           <thead className="table-head">
             <tr>
-              <th className="px-4 py-2.5">Nombre</th>
-              <th className="hidden px-4 py-2.5 sm:table-cell">Dirección</th>
-              <th className="w-20 px-4 py-2.5">Activa</th>
+              <th className="px-3 py-2.5 sm:px-4">Nombre</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 sm:table-cell">Dirección</th>
+              <th className="w-20 px-3 py-2.5 sm:px-4">Activa</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {campuses.map((c) => (
               <tr key={c.id}>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5 sm:px-4">
                   <p className="font-semibold text-slate-900">{c.name}</p>
                   {c.address && <p className="text-[13px] text-slate-500 sm:hidden">{c.address}</p>}
                 </td>
-                <td className="hidden px-4 py-2.5 text-slate-500 sm:table-cell">{c.address ?? "—"}</td>
-                <td className="px-4 py-2.5">
+                <td className="hidden px-3 py-2.5 sm:px-4 text-slate-500 sm:table-cell">{c.address ?? "—"}</td>
+                <td className="px-3 py-2.5 sm:px-4">
                   <StatusBadge name={c.name} active={c.status === "ACTIVE"} onToggle={() => toggle(c.id)} />
                 </td>
               </tr>
@@ -335,19 +335,19 @@ function PeriodsSection({ periods, onChange }: { periods: Period[]; onChange: ()
         <table className="w-full text-left text-[15px]">
           <thead className="table-head">
             <tr>
-              <th className="px-4 py-2.5">Periodo</th>
-              <th className="px-4 py-2.5">Fechas</th>
-              <th className="w-20 px-4 py-2.5">Activo</th>
+              <th className="px-3 py-2.5 sm:px-4">Periodo</th>
+              <th className="px-3 py-2.5 sm:px-4">Fechas</th>
+              <th className="w-20 px-3 py-2.5 sm:px-4">Activo</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {periods.map((p) => (
               <tr key={p.id}>
-                <td className="px-4 py-2.5 font-semibold text-slate-900">{p.name}</td>
-                <td className="px-4 py-2.5 text-[14px] text-slate-500">
+                <td className="px-3 py-2.5 sm:px-4 font-semibold text-slate-900">{p.name}</td>
+                <td className="px-3 py-2.5 sm:px-4 text-[14px] text-slate-500">
                   {formatPlainDate(p.startDate)} – {formatPlainDate(p.endDate)}
                 </td>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5 sm:px-4">
                   <StatusBadge name={p.name} active={p.status === "ACTIVE"} onToggle={() => toggle(p.id)} />
                 </td>
               </tr>
@@ -415,15 +415,15 @@ function SubjectsSection({ subjects, onChange }: { subjects: Subject[]; onChange
         <table className="w-full text-left text-[15px]">
           <thead className="table-head">
             <tr>
-              <th className="px-4 py-2.5">Materia</th>
-              <th className="w-20 px-4 py-2.5">Activa</th>
+              <th className="px-3 py-2.5 sm:px-4">Materia</th>
+              <th className="w-20 px-3 py-2.5 sm:px-4">Activa</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {subjects.map((s) => (
               <tr key={s.id}>
-                <td className="px-4 py-2.5 font-semibold text-slate-900">{s.name}</td>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5 sm:px-4 font-semibold text-slate-900">{s.name}</td>
+                <td className="px-3 py-2.5 sm:px-4">
                   <StatusBadge name={s.name} active={s.status === "ACTIVE"} onToggle={() => toggle(s.id)} />
                 </td>
               </tr>
@@ -589,13 +589,13 @@ function CoursesSection({
         <table className="w-full text-left text-[15px]">
           <thead className="table-head">
             <tr>
-              <th className="px-4 py-2.5">Curso</th>
-              <th className="hidden px-4 py-2.5 md:table-cell">Sede</th>
-              <th className="hidden px-4 py-2.5 md:table-cell">Periodo</th>
-              <th className="hidden px-4 py-2.5 md:table-cell">Jornada</th>
-              <th className="hidden px-4 py-2.5 text-right sm:table-cell">Estudiantes</th>
-              <th className="w-20 px-4 py-2.5">Activo</th>
-              <th className="px-4 py-2.5">
+              <th className="px-3 py-2.5 sm:px-4">Curso</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 md:table-cell">Sede</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 md:table-cell">Periodo</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 md:table-cell">Jornada</th>
+              <th className="hidden px-3 py-2.5 sm:px-4 text-right sm:table-cell">Estudiantes</th>
+              <th className="w-20 px-3 py-2.5 sm:px-4">Activo</th>
+              <th className="px-3 py-2.5 sm:px-4">
                 <span className="sr-only">Acciones</span>
               </th>
             </tr>
@@ -603,19 +603,19 @@ function CoursesSection({
           <tbody className="divide-y divide-slate-100">
             {courses.map((c) => (
               <tr key={c.id}>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5 sm:px-4">
                   <p className="font-semibold text-slate-900">{c.name}</p>
                   <p className="text-[13px] text-slate-500 md:hidden">
                     {c.campus.name} · {JORNADA[c.jornada] ?? c.jornada} · {c._count.students} est.
                   </p>
                 </td>
-                <td className="hidden px-4 py-2.5 md:table-cell">{c.campus.name}</td>
-                <td className="hidden px-4 py-2.5 md:table-cell">{c.academicPeriod.name}</td>
-                <td className="hidden px-4 py-2.5 md:table-cell">{JORNADA[c.jornada] ?? c.jornada}</td>
-                <td className="hidden px-4 py-2.5 text-right tabular-nums sm:table-cell">
+                <td className="hidden px-3 py-2.5 sm:px-4 md:table-cell">{c.campus.name}</td>
+                <td className="hidden px-3 py-2.5 sm:px-4 md:table-cell">{c.academicPeriod.name}</td>
+                <td className="hidden px-3 py-2.5 sm:px-4 md:table-cell">{JORNADA[c.jornada] ?? c.jornada}</td>
+                <td className="hidden px-3 py-2.5 sm:px-4 text-right tabular-nums sm:table-cell">
                   {c._count.students}
                 </td>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5 sm:px-4">
                   <StatusBadge name={c.name} active={c.status === "ACTIVE"} onToggle={() => toggle(c.id)} />
                 </td>
                 <td className="px-2 py-1 text-right">

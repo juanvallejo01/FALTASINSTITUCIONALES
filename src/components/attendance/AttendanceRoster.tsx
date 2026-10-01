@@ -190,7 +190,7 @@ export function AttendanceRoster({
         ))}
       </ul>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-black/[0.06] bg-white/85 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl backdrop-saturate-150">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-black/[0.06] bg-white/85 px-4 sm:px-6 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto max-w-6xl">
           <div className="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-600">
             {OPTIONS.map((o) => (

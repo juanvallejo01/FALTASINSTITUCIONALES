@@ -5,8 +5,9 @@ export function RowActions({ onEdit, onDelete }: { onEdit?: () => void; onDelete
   return (
     <div className="inline-flex items-center gap-0.5">
       {onEdit && (
-        <button type="button" onClick={onEdit} className="btn-plain px-2.5 text-[14px]">
-          Editar
+        <button type="button" onClick={onEdit} aria-label="Editar" className="btn-plain px-2.5 text-[14px]">
+          <Icon name="pencil" className="h-[18px] w-[18px] sm:hidden" />
+          <span className="hidden sm:inline">Editar</span>
         </button>
       )}
       {onDelete && (

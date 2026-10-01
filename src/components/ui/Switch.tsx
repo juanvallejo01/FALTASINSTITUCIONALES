@@ -21,7 +21,7 @@ export function Switch({
       title={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-[31px] w-[51px] shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+      className={`relative inline-flex h-[31px] w-[51px] shrink-0 items-center rounded-full transition-colors before:absolute before:-inset-2 before:content-[''] disabled:opacity-50 ${
         checked ? "bg-emerald-500" : "bg-slate-300"
       }`}
     >
