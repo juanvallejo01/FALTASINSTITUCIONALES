@@ -1,5 +1,6 @@
 import { requirePageRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { InstitutionsManager } from "@/components/admin/InstitutionsManager";
 
 export default async function InstitucionesPage() {
@@ -12,8 +13,8 @@ export default async function InstitucionesPage() {
   });
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">Instituciones ({institutions.length})</h1>
+    <div>
+      <PageHeader title="Instituciones" subtitle={`${institutions.length} registradas`} />
       <InstitutionsManager
         initialInstitutions={institutions.map((i) => ({
           id: i.id,

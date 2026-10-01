@@ -50,6 +50,19 @@ export async function listFollowUpCases(session: SessionPayload, filters: CaseFi
   }));
 }
 
+/** Número de casos por estado, dentro del alcance del usuario (para filtros y resúmenes). */
+export async function countFollowUpCasesByStatus(session: SessionPayload) {
+  const scoped = scopedInstitutionId(session);
+  const groups = await prisma.followUpCase.groupBy({
+    by: ["status"],
+    where: { deletedAt: null, institutionId: scoped ?? undefined },
+    _count: { _all: true },
+  });
+  const counts: Record<string, number> = {};
+  for (const g of groups) counts[g.status] = g._count._all;
+  return counts;
+}
+
 export async function getFollowUpCaseDetail(caseId: string, session: SessionPayload) {
   const scoped = scopedInstitutionId(session);
 

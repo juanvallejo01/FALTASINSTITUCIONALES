@@ -1,5 +1,6 @@
 import { requirePageRole, scopedInstitutionId } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TeachersManager } from "@/components/admin/TeachersManager";
 
 export default async function DocentesPage() {
@@ -16,8 +17,8 @@ export default async function DocentesPage() {
   ]);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">Docentes ({teachers.length})</h1>
+    <div>
+      <PageHeader title="Docentes" subtitle={`${teachers.length} ${teachers.length === 1 ? "docente activo" : "docentes activos"}`} />
       <TeachersManager
         campuses={campuses.map((c) => ({ id: c.id, name: c.name }))}
         initialTeachers={teachers.map((t) => ({

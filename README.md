@@ -142,6 +142,11 @@ Para las instituciones 2-5 existen las mismas variantes con sufijo, p. ej.
 `docente.inst04@demo.local` — útiles para probar el aislamiento entre
 instituciones.
 
+En desarrollo, `/login` muestra un panel **Cuentas de prueba** con estas cuentas:
+un clic en cualquiera inicia sesión con ese rol. En producción el panel queda
+oculto, salvo que se defina `SHOW_DEMO_LOGIN=true` (solo para despliegues de
+pruebas; nunca en un ambiente real).
+
 ## 9. Ejecución
 
 ```bash

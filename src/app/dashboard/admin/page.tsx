@@ -1,58 +1,79 @@
-import Link from "next/link";
 import { requirePageRole } from "@/lib/rbac";
 import { getGlobalOverview } from "@/lib/coordination";
 import { StatCard } from "@/components/layout/StatCard";
-import { formatDateEs } from "@/lib/tz";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Icon } from "@/components/ui/Icon";
+import { formatLongDateEs } from "@/lib/tz";
 
 export default async function AdminHomePage() {
   await requirePageRole("SUPER_ADMIN");
-  const overview = await getGlobalOverview();
+  const o = await getGlobalOverview();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-900">Panel de administración general</h1>
-        <p className="text-sm text-slate-500">{formatDateEs(new Date())}</p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader title="Administración" subtitle={formatLongDateEs()} />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <StatCard label="Instituciones activas" value={overview.institutionCount} />
-        <StatCard label="Estudiantes" value={overview.studentCount} />
-        <StatCard label="Docentes" value={overview.teacherCount} />
-        <StatCard label="Cursos" value={overview.courseCount} />
-        <StatCard label="Clases de hoy" value={overview.sessionsToday} />
-        <StatCard
-          label="Pendientes hoy"
-          value={overview.pendingToday}
-          tone={overview.pendingToday > 0 ? "warning" : "success"}
-        />
-        <StatCard
-          label="Estudiantes en alerta"
-          value={overview.openAlerts}
-          tone={overview.openAlerts > 0 ? "danger" : "success"}
-        />
-        <StatCard label="Casos de seguimiento activos" value={overview.pendingCases} tone="warning" />
-      </div>
+      <section>
+        <h2 className="section-title">Hoy en todas las instituciones</h2>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard
+            label="Clases registradas"
+            value={`${o.registeredToday}/${o.sessionsToday}`}
+            icon="checklist"
+            tone={o.pendingToday > 0 ? "warning" : "success"}
+            hint={o.pendingToday > 0 ? `${o.pendingToday} pendientes` : "Todas al día"}
+          />
+          <StatCard
+            label="Estudiantes en alerta"
+            value={o.openAlerts}
+            icon="bell"
+            tone={o.openAlerts > 0 ? "danger" : "success"}
+          />
+          <StatCard
+            label="Casos activos"
+            value={o.pendingCases}
+            icon="folder"
+            tone={o.pendingCases > 0 ? "warning" : "default"}
+          />
+          <StatCard
+            label="Instituciones activas"
+            value={o.institutionCount}
+            icon="building"
+            href="/dashboard/admin/instituciones"
+          />
+        </div>
+      </section>
 
-      {overview.institutionsWithPending.length > 0 && (
-        <div className="card p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Instituciones con docentes pendientes hoy
-          </h2>
-          <ul className="space-y-1 text-sm">
-            {overview.institutionsWithPending.map((i) => (
-              <li key={i.institutionId} className="flex justify-between">
-                <span>{i.name}</span>
-                <span className="font-medium text-amber-600">{i.pending} pendientes</span>
+      {o.institutionsWithPending.length > 0 && (
+        <section>
+          <h2 className="section-title">Instituciones con clases sin registrar hoy</h2>
+          <ul className="list-group">
+            {o.institutionsWithPending.map((i) => (
+              <li key={i.institutionId} className="list-row">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                  <Icon name="building" className="h-[18px] w-[18px]" />
+                </span>
+                <span className="min-w-0 flex-1 truncate font-medium text-slate-900">{i.name}</span>
+                <span className="text-[13px] tabular-nums text-slate-500">
+                  {i.total - i.pending}/{i.total} registradas
+                </span>
+                <span className="badge bg-amber-50 text-amber-700">
+                  {i.pending} {i.pending === 1 ? "pendiente" : "pendientes"}
+                </span>
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
 
-      <Link href="/dashboard/admin/instituciones" className="btn-primary inline-block">
-        Gestionar instituciones
-      </Link>
+      <section>
+        <h2 className="section-title">Totales</h2>
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard label="Estudiantes" value={o.studentCount} icon="users" />
+          <StatCard label="Docentes" value={o.teacherCount} icon="user" />
+          <StatCard label="Cursos" value={o.courseCount} icon="book" />
+        </div>
+      </section>
     </div>
   );
 }

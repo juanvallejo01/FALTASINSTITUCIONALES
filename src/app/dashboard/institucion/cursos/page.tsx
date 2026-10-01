@@ -1,5 +1,6 @@
 import { requirePageRole, scopedInstitutionId } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { AcademicManager } from "@/components/admin/AcademicManager";
 
 export default async function CursosInstitucionPage() {
@@ -18,11 +19,8 @@ export default async function CursosInstitucionPage() {
   ]);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">Estructura académica</h1>
-      <p className="text-sm text-slate-500">
-        Administra sedes, periodos académicos, materias y cursos de tu institución.
-      </p>
+    <div>
+      <PageHeader title="Estructura académica" subtitle="Sedes, periodos, materias y cursos de tu institución" />
       <AcademicManager
         initialCampuses={campuses.map((c) => ({
           id: c.id,

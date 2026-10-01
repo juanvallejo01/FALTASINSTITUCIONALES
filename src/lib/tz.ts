@@ -1,4 +1,5 @@
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import { es } from "date-fns/locale";
 
 export const APP_TIMEZONE = process.env.APP_TIMEZONE || "America/Bogota";
 
@@ -35,6 +36,26 @@ export function formatDateOnlyEs(date: Date): string {
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const year = date.getUTCFullYear();
   return `${day}/${month}/${year}`;
+}
+
+/** "Miércoles, 1 de octubre": fecha legible para encabezados (hoy, en la zona de la app). */
+export function formatLongDateEs(date: Date = new Date()): string {
+  const text = formatInTimeZone(date, APP_TIMEZONE, "EEEE, d 'de' MMMM", { locale: es });
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * Versión corta y legible para fechas PURAS (@db.Date): "lun 14 sep".
+ * Igual que formatDateOnlyEs, lee los componentes UTC para no correr el día.
+ */
+export function formatShortDateOnlyEs(date: Date): string {
+  const days = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+  const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  return `${days[date.getUTCDay()]} ${date.getUTCDate()} ${months[date.getUTCMonth()]}`;
+}
+
+export function formatTimeEs(date: Date): string {
+  return formatInTimeZone(date, APP_TIMEZONE, "HH:mm");
 }
 
 export function formatDateTimeEs(date: Date): string {

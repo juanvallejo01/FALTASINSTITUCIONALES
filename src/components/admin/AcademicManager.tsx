@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Sheet } from "@/components/ui/Sheet";
+import { Switch } from "@/components/ui/Switch";
+import { Icon } from "@/components/ui/Icon";
+import { JORNADA } from "@/lib/labels";
 
 type Campus = { id: string; name: string; address: string | null; status: "ACTIVE" | "INACTIVE" };
 type Period = { id: string; name: string; startDate: string; endDate: string; status: "ACTIVE" | "INACTIVE" };
@@ -32,22 +36,74 @@ type TabKey = (typeof TABS)[number]["key"];
 function StatusBadge({
   active,
   onToggle,
+  name,
 }: {
   active: boolean;
-  onToggle: () => void;
+  onToggle: () => Promise<void> | void;
+  name: string;
 }) {
   const [loading, setLoading] = useState(false);
   return (
-    <button
-      onClick={async () => {
+    <Switch
+      checked={active}
+      disabled={loading}
+      label={active ? `Desactivar ${name}` : `Activar ${name}`}
+      onChange={async () => {
         setLoading(true);
         await onToggle();
         setLoading(false);
       }}
-      disabled={loading}
-      className={`badge ${active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
-    >
-      {active ? "Activo" : "Inactivo"}
+    />
+  );
+}
+
+/** Fechas @db.Date guardadas a medianoche UTC: se muestran en UTC para no correr el día. */
+function formatPlainDate(iso: string) {
+  return new Date(iso).toLocaleDateString("es-CO", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function FormFooter({
+  saving,
+  label,
+  savingLabel,
+  onCancel,
+}: {
+  saving: boolean;
+  label: string;
+  savingLabel: string;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="flex flex-col-reverse gap-2 pt-1 sm:col-span-full sm:flex-row sm:justify-end">
+      <button type="button" className="btn-plain" onClick={onCancel}>
+        Cancelar
+      </button>
+      <button type="submit" disabled={saving} className="btn-primary">
+        {saving ? savingLabel : label}
+      </button>
+    </div>
+  );
+}
+
+function FormError({ error }: { error: string | null }) {
+  if (!error) return null;
+  return (
+    <p role="alert" className="text-[14px] text-red-600 sm:col-span-full">
+      {error}
+    </p>
+  );
+}
+
+function NewButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button className="btn-primary" onClick={onClick}>
+      <Icon name="plus" className="h-[18px] w-[18px]" strokeWidth={2.4} />
+      {label}
     </button>
   );
 }
@@ -72,12 +128,15 @@ export function AcademicManager({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
+      <div className="segmented" role="tablist" aria-label="Secciones">
         {TABS.map((t) => (
           <button
             key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
+            aria-pressed={tab === t.key}
             onClick={() => setTab(t.key)}
-            className={`badge ${tab === t.key ? "bg-brand-100 text-brand-700" : "bg-slate-100 text-slate-600"}`}
+            className="segmented-item"
           >
             {t.label}
           </button>
@@ -134,48 +193,48 @@ function CampusesSection({ campuses, onChange }: { campuses: Campus[]; onChange:
 
   return (
     <div className="space-y-4">
-      {open ? (
-        <form onSubmit={handleCreate} className="card grid gap-3 p-4 sm:grid-cols-2">
-          <div>
-            <label className="label">Nombre</label>
-            <input className="input" required value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Dirección (opcional)</label>
-            <input className="input" value={address} onChange={(e) => setAddress(e.target.value)} />
-          </div>
-          {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
-          <div className="flex gap-2 sm:col-span-2">
-            <button type="submit" disabled={saving} className="btn-primary">
-              {saving ? "Creando..." : "Crear sede"}
-            </button>
-            <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
-              Cancelar
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button className="btn-primary" onClick={() => setOpen(true)}>
-          + Nueva sede
-        </button>
+      <NewButton label="Nueva sede" onClick={() => setOpen(true)} />
+      {open && (
+        <Sheet title="Nueva sede" onClose={() => setOpen(false)}>
+          <form onSubmit={handleCreate} className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Nombre</label>
+              <input className="input" required value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Dirección (opcional)</label>
+              <input className="input" value={address} onChange={(e) => setAddress(e.target.value)} />
+            </div>
+            <FormError error={error} />
+            <FormFooter
+              saving={saving}
+              label="Crear sede"
+              savingLabel="Creando..."
+              onCancel={() => setOpen(false)}
+            />
+          </form>
+        </Sheet>
       )}
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[420px] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+        <table className="w-full text-left text-[15px]">
+          <thead className="table-head">
             <tr>
               <th className="px-4 py-2.5">Nombre</th>
-              <th className="px-4 py-2.5">Dirección</th>
-              <th className="px-4 py-2.5">Estado</th>
+              <th className="hidden px-4 py-2.5 sm:table-cell">Dirección</th>
+              <th className="w-20 px-4 py-2.5">Activa</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {campuses.map((c) => (
               <tr key={c.id}>
-                <td className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
-                <td className="px-4 py-2.5 text-slate-500">{c.address ?? "—"}</td>
                 <td className="px-4 py-2.5">
-                  <StatusBadge active={c.status === "ACTIVE"} onToggle={() => toggle(c.id)} />
+                  <p className="font-semibold text-slate-900">{c.name}</p>
+                  {c.address && <p className="text-[13px] text-slate-500 sm:hidden">{c.address}</p>}
+                </td>
+                <td className="hidden px-4 py-2.5 text-slate-500 sm:table-cell">{c.address ?? "—"}</td>
+                <td className="px-4 py-2.5">
+                  <StatusBadge name={c.name} active={c.status === "ACTIVE"} onToggle={() => toggle(c.id)} />
                 </td>
               </tr>
             ))}
@@ -227,76 +286,69 @@ function PeriodsSection({ periods, onChange }: { periods: Period[]; onChange: ()
 
   return (
     <div className="space-y-4">
-      {open ? (
-        <form onSubmit={handleCreate} className="card grid gap-3 p-4 sm:grid-cols-3">
-          <div>
-            <label className="label">Nombre</label>
-            <input
-              className="input"
-              required
-              placeholder="2026"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+      <NewButton label="Nuevo periodo" onClick={() => setOpen(true)} />
+      {open && (
+        <Sheet title="Nuevo periodo académico" onClose={() => setOpen(false)}>
+          <form onSubmit={handleCreate} className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="label">Nombre</label>
+              <input
+                className="input"
+                required
+                placeholder="2026"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">Inicio</label>
+              <input
+                type="date"
+                className="input"
+                required
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">Fin</label>
+              <input
+                type="date"
+                className="input"
+                required
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+            <FormError error={error} />
+            <FormFooter
+              saving={saving}
+              label="Crear periodo"
+              savingLabel="Creando..."
+              onCancel={() => setOpen(false)}
             />
-          </div>
-          <div>
-            <label className="label">Inicio</label>
-            <input
-              type="date"
-              className="input"
-              required
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="label">Fin</label>
-            <input
-              type="date"
-              className="input"
-              required
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-          {error && <p className="sm:col-span-3 text-sm text-red-600">{error}</p>}
-          <div className="flex gap-2 sm:col-span-3">
-            <button type="submit" disabled={saving} className="btn-primary">
-              {saving ? "Creando..." : "Crear periodo"}
-            </button>
-            <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
-              Cancelar
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button className="btn-primary" onClick={() => setOpen(true)}>
-          + Nuevo periodo
-        </button>
+          </form>
+        </Sheet>
       )}
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[420px] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+        <table className="w-full text-left text-[15px]">
+          <thead className="table-head">
             <tr>
-              <th className="px-4 py-2.5">Nombre</th>
-              <th className="px-4 py-2.5">Inicio</th>
-              <th className="px-4 py-2.5">Fin</th>
-              <th className="px-4 py-2.5">Estado</th>
+              <th className="px-4 py-2.5">Periodo</th>
+              <th className="px-4 py-2.5">Fechas</th>
+              <th className="w-20 px-4 py-2.5">Activo</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {periods.map((p) => (
               <tr key={p.id}>
-                <td className="px-4 py-2.5 font-medium text-slate-900">{p.name}</td>
-                <td className="px-4 py-2.5 text-slate-500">
-                  {new Date(p.startDate).toLocaleDateString("es-CO")}
-                </td>
-                <td className="px-4 py-2.5 text-slate-500">
-                  {new Date(p.endDate).toLocaleDateString("es-CO")}
+                <td className="px-4 py-2.5 font-semibold text-slate-900">{p.name}</td>
+                <td className="px-4 py-2.5 text-[14px] text-slate-500">
+                  {formatPlainDate(p.startDate)} – {formatPlainDate(p.endDate)}
                 </td>
                 <td className="px-4 py-2.5">
-                  <StatusBadge active={p.status === "ACTIVE"} onToggle={() => toggle(p.id)} />
+                  <StatusBadge name={p.name} active={p.status === "ACTIVE"} onToggle={() => toggle(p.id)} />
                 </td>
               </tr>
             ))}
@@ -340,40 +392,39 @@ function SubjectsSection({ subjects, onChange }: { subjects: Subject[]; onChange
 
   return (
     <div className="space-y-4">
-      {open ? (
-        <form onSubmit={handleCreate} className="card flex flex-wrap items-end gap-3 p-4">
-          <div className="flex-1">
-            <label className="label">Nombre</label>
-            <input className="input" required value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          {error && <p className="w-full text-sm text-red-600">{error}</p>}
-          <button type="submit" disabled={saving} className="btn-primary">
-            {saving ? "Creando..." : "Crear materia"}
-          </button>
-          <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
-            Cancelar
-          </button>
-        </form>
-      ) : (
-        <button className="btn-primary" onClick={() => setOpen(true)}>
-          + Nueva materia
-        </button>
+      <NewButton label="Nueva materia" onClick={() => setOpen(true)} />
+      {open && (
+        <Sheet title="Nueva materia" onClose={() => setOpen(false)}>
+          <form onSubmit={handleCreate} className="grid gap-4">
+            <div>
+              <label className="label">Nombre</label>
+              <input className="input" required value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <FormError error={error} />
+            <FormFooter
+              saving={saving}
+              label="Crear materia"
+              savingLabel="Creando..."
+              onCancel={() => setOpen(false)}
+            />
+          </form>
+        </Sheet>
       )}
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[320px] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+        <table className="w-full text-left text-[15px]">
+          <thead className="table-head">
             <tr>
-              <th className="px-4 py-2.5">Nombre</th>
-              <th className="px-4 py-2.5">Estado</th>
+              <th className="px-4 py-2.5">Materia</th>
+              <th className="w-20 px-4 py-2.5">Activa</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {subjects.map((s) => (
               <tr key={s.id}>
-                <td className="px-4 py-2.5 font-medium text-slate-900">{s.name}</td>
+                <td className="px-4 py-2.5 font-semibold text-slate-900">{s.name}</td>
                 <td className="px-4 py-2.5">
-                  <StatusBadge active={s.status === "ACTIVE"} onToggle={() => toggle(s.id)} />
+                  <StatusBadge name={s.name} active={s.status === "ACTIVE"} onToggle={() => toggle(s.id)} />
                 </td>
               </tr>
             ))}
@@ -455,111 +506,120 @@ function CoursesSection({
 
   if (campuses.length === 0 || periods.length === 0) {
     return (
-      <div className="card p-4 text-sm text-amber-700">
-        Antes de crear cursos necesitas al menos una sede activa y un periodo académico activo
-        (pestañas &quot;Sedes&quot; y &quot;Periodos&quot;).
+      <div className="flex gap-3 rounded-2xl bg-amber-50 p-4 text-[15px] text-amber-800">
+        <Icon name="alert" className="h-5 w-5 shrink-0" />
+        <p>
+          Antes de crear cursos necesitas al menos una sede y un periodo académico. Créalos en las pestañas
+          &quot;Sedes&quot; y &quot;Periodos&quot;.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {open ? (
-        <form onSubmit={handleSubmit} className="card grid gap-3 p-4 sm:grid-cols-2">
-          <div>
-            <label className="label">Nombre</label>
-            <input
-              className="input"
-              required
-              placeholder="8-03"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+      <NewButton label="Nuevo curso" onClick={startCreate} />
+      {open && (
+        <Sheet title={editingId ? "Editar curso" : "Nuevo curso"} onClose={() => setOpen(false)}>
+          <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Nombre</label>
+              <input
+                className="input"
+                required
+                placeholder="8-03"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Jornada</label>
+              <select
+                className="input"
+                value={form.jornada}
+                onChange={(e) => setForm({ ...form, jornada: e.target.value })}
+              >
+                {JORNADAS.map((j) => (
+                  <option key={j} value={j}>
+                    {JORNADA[j] ?? j}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">Sede</label>
+              <select
+                className="input"
+                value={form.campusId}
+                onChange={(e) => setForm({ ...form, campusId: e.target.value })}
+              >
+                {campuses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">Periodo</label>
+              <select
+                className="input"
+                value={form.academicPeriodId}
+                onChange={(e) => setForm({ ...form, academicPeriodId: e.target.value })}
+              >
+                {periods.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <FormError error={error} />
+            <FormFooter
+              saving={saving}
+              label={editingId ? "Guardar cambios" : "Crear curso"}
+              savingLabel="Guardando..."
+              onCancel={() => setOpen(false)}
             />
-          </div>
-          <div>
-            <label className="label">Jornada</label>
-            <select
-              className="input"
-              value={form.jornada}
-              onChange={(e) => setForm({ ...form, jornada: e.target.value })}
-            >
-              {JORNADAS.map((j) => (
-                <option key={j} value={j}>
-                  {j}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">Sede</label>
-            <select
-              className="input"
-              value={form.campusId}
-              onChange={(e) => setForm({ ...form, campusId: e.target.value })}
-            >
-              {campuses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">Periodo</label>
-            <select
-              className="input"
-              value={form.academicPeriodId}
-              onChange={(e) => setForm({ ...form, academicPeriodId: e.target.value })}
-            >
-              {periods.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
-          <div className="flex gap-2 sm:col-span-2">
-            <button type="submit" disabled={saving} className="btn-primary">
-              {saving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear curso"}
-            </button>
-            <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
-              Cancelar
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button className="btn-primary" onClick={startCreate}>
-          + Nuevo curso
-        </button>
+          </form>
+        </Sheet>
       )}
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+        <table className="w-full text-left text-[15px]">
+          <thead className="table-head">
             <tr>
               <th className="px-4 py-2.5">Curso</th>
-              <th className="px-4 py-2.5">Sede</th>
-              <th className="px-4 py-2.5">Periodo</th>
-              <th className="px-4 py-2.5">Jornada</th>
-              <th className="px-4 py-2.5 text-right">Estudiantes</th>
-              <th className="px-4 py-2.5">Estado</th>
-              <th className="px-4 py-2.5"></th>
+              <th className="hidden px-4 py-2.5 md:table-cell">Sede</th>
+              <th className="hidden px-4 py-2.5 md:table-cell">Periodo</th>
+              <th className="hidden px-4 py-2.5 md:table-cell">Jornada</th>
+              <th className="hidden px-4 py-2.5 text-right sm:table-cell">Estudiantes</th>
+              <th className="w-20 px-4 py-2.5">Activo</th>
+              <th className="px-4 py-2.5">
+                <span className="sr-only">Acciones</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {courses.map((c) => (
               <tr key={c.id}>
-                <td className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
-                <td className="px-4 py-2.5">{c.campus.name}</td>
-                <td className="px-4 py-2.5">{c.academicPeriod.name}</td>
-                <td className="px-4 py-2.5">{c.jornada}</td>
-                <td className="px-4 py-2.5 text-right">{c._count.students}</td>
                 <td className="px-4 py-2.5">
-                  <StatusBadge active={c.status === "ACTIVE"} onToggle={() => toggle(c.id)} />
+                  <p className="font-semibold text-slate-900">{c.name}</p>
+                  <p className="text-[13px] text-slate-500 md:hidden">
+                    {c.campus.name} · {JORNADA[c.jornada] ?? c.jornada} · {c._count.students} est.
+                  </p>
+                </td>
+                <td className="hidden px-4 py-2.5 md:table-cell">{c.campus.name}</td>
+                <td className="hidden px-4 py-2.5 md:table-cell">{c.academicPeriod.name}</td>
+                <td className="hidden px-4 py-2.5 md:table-cell">{JORNADA[c.jornada] ?? c.jornada}</td>
+                <td className="hidden px-4 py-2.5 text-right tabular-nums sm:table-cell">
+                  {c._count.students}
                 </td>
                 <td className="px-4 py-2.5">
-                  <button className="text-brand-600 hover:underline" onClick={() => startEdit(c)}>
+                  <StatusBadge name={c.name} active={c.status === "ACTIVE"} onToggle={() => toggle(c.id)} />
+                </td>
+                <td className="px-2 py-1 text-right">
+                  <button className="btn-plain px-2.5 text-[14px]" onClick={() => startEdit(c)}>
                     Editar
                   </button>
                 </td>

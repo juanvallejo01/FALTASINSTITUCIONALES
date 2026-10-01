@@ -6,10 +6,9 @@
 import { PrismaClient, type Role, type DayOfWeek } from "@prisma/client";
 import { hashPassword } from "../src/lib/password";
 import { recomputeStudentAlert } from "../src/lib/alerts";
+import { DEMO_PASSWORD } from "../src/lib/demo-accounts";
 
 const prisma = new PrismaClient();
-
-const DEMO_PASSWORD = "Demo12345!";
 
 // PRNG determinista (mulberry32) para que el seed sea reproducible entre corridas.
 function mulberry32(seed: number) {

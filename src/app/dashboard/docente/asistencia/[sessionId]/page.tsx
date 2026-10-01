@@ -1,24 +1,34 @@
 import { requirePageRole } from "@/lib/rbac";
 import { getSessionRoster } from "@/lib/attendance";
 import { AttendanceRoster } from "@/components/attendance/AttendanceRoster";
-import { formatDateOnlyEs } from "@/lib/tz";
+import { formatShortDateOnlyEs } from "@/lib/tz";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default async function MarcarAsistenciaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ sessionId: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const session = await requirePageRole("DOCENTE");
   const { sessionId } = await params;
+  const { from } = await searchParams;
+  const back =
+    from === "historial"
+      ? { href: "/dashboard/docente/historial", label: "Historial" }
+      : { href: "/dashboard/docente", label: "Mis clases" };
 
   let data;
   try {
     data = await getSessionRoster(sessionId, session);
   } catch {
     return (
-      <div className="card p-6 text-sm text-slate-600">
-        No fue posible cargar esta clase. Puede que no exista o no tengas acceso a ella.
-      </div>
+      <EmptyState
+        icon="alert"
+        title="No se pudo abrir la clase"
+        description="Puede que no exista o que no tengas acceso a ella."
+      />
     );
   }
 
@@ -28,11 +38,12 @@ export default async function MarcarAsistenciaPage({
       sessionMeta={{
         courseName: data.session.courseName,
         subjectName: data.session.subjectName,
-        dateLabel: formatDateOnlyEs(new Date(data.session.date)),
+        dateLabel: formatShortDateOnlyEs(new Date(data.session.date)),
         alreadyRegistered: data.session.status === "REGISTRADA",
       }}
       initialStudents={data.students}
       readOnly={false}
+      back={back}
     />
   );
 }

@@ -1,23 +1,12 @@
 import { requirePageRole } from "@/lib/rbac";
 import { getFollowUpCaseDetail } from "@/lib/followup";
-import { formatDateOnlyEs, formatDateTimeEs } from "@/lib/tz";
+import { formatDateTimeEs, formatShortDateOnlyEs } from "@/lib/tz";
+import { ALERT_LEVEL, ATTENDANCE_STATUS, CASE_STATUS, CONTACT_RESULT, CONTACT_TYPE, labelOf } from "@/lib/labels";
 import { CaseActions } from "@/components/followup/CaseActions";
-
-const CONTACT_TYPE_LABELS: Record<string, string> = {
-  LLAMADA: "Llamada",
-  MENSAJE: "Mensaje",
-  PRESENCIAL: "Presencial",
-  OTRO: "Otro",
-};
-
-const CONTACT_RESULT_LABELS: Record<string, string> = {
-  ACUDIENTE_CONTACTADO: "Acudiente contactado",
-  NO_CONTESTO: "No contestó",
-  NUMERO_INVALIDO: "Número inválido",
-  SOLICITA_DEVOLUCION_LLAMADA: "Solicita devolución de llamada",
-  AUSENCIA_JUSTIFICADA: "Ausencia justificada",
-  OTRO: "Otro",
-};
+import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Badge } from "@/components/ui/Badge";
+import { Icon } from "@/components/ui/Icon";
 
 export default async function CaseDetailPage({
   params,
@@ -31,103 +20,127 @@ export default async function CaseDetailPage({
   try {
     data = await getFollowUpCaseDetail(caseId, session);
   } catch {
-    return <div className="card p-6 text-sm text-slate-600">Caso no encontrado.</div>;
+    return <EmptyState icon="folder" title="Caso no encontrado" />;
   }
 
+  const status = labelOf(CASE_STATUS, data.status);
+  const level = data.alert ? labelOf(ALERT_LEVEL, data.alert.level) : null;
+  const back = { href: "/dashboard/seguimiento/casos", label: "Casos" };
+
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="space-y-6 lg:col-span-2">
-        <div className="card p-4">
-          <h1 className="text-lg font-semibold text-slate-900">{data.student.name}</h1>
-          <p className="text-sm text-slate-500">
-            {data.student.internalCode} · {data.student.institutionName} · {data.student.courseName}
-          </p>
-          {data.alert && (
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-              <Info label="Nivel" value={data.alert.level} />
-              <Info label="Ausencias" value={String(data.alert.absenceCount)} />
-              <Info label="Consecutivas" value={String(data.alert.consecutiveAbsences)} />
-              <Info label="% Asistencia" value={`${data.alert.attendancePercentage.toFixed(1)}%`} />
-            </div>
-          )}
-          {data.guardian && (
-            <div className="mt-4 border-t border-slate-100 pt-3 text-sm">
-              <p className="font-medium text-slate-900">Acudiente</p>
-              <p className="text-slate-600">
-                {data.guardian.name} ({data.guardian.relationship}) — {data.guardian.phone}
-              </p>
-            </div>
-          )}
-        </div>
+    <div>
+      <PageHeader
+        back={back}
+        title={data.student.name}
+        subtitle={`${data.student.courseName} · ${data.student.institutionName} · ${data.student.internalCode}`}
+        actions={<Badge tone={status.tone}>{status.label}</Badge>}
+      />
 
-        <div className="card p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Historial de asistencia (no presentes)
-          </h2>
-          {data.attendanceHistory.length === 0 ? (
-            <p className="text-sm text-slate-500">Sin novedades registradas.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[420px] text-left text-sm">
-                <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                  <tr>
-                    <th className="py-2">Fecha</th>
-                    <th className="py-2">Materia</th>
-                    <th className="py-2">Docente</th>
-                    <th className="py-2">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {data.attendanceHistory.map((h, i) => (
-                    <tr key={i}>
-                      <td className="py-2">{formatDateOnlyEs(h.date)}</td>
-                      <td className="py-2">{h.subjectName}</td>
-                      <td className="py-2">{h.teacherName}</td>
-                      <td className="py-2">{h.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          {data.alert && level && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Metric label="Nivel" value={level.label} tone={level.tone === "danger" ? "text-red-600" : "text-amber-600"} />
+              <Metric label="Ausencias" value={String(data.alert.absenceCount)} />
+              <Metric label="Seguidas" value={String(data.alert.consecutiveAbsences)} />
+              <Metric
+                label="Asistencia"
+                value={`${data.alert.attendancePercentage.toFixed(0)}%`}
+                tone={data.alert.attendancePercentage < 80 ? "text-red-600" : undefined}
+              />
             </div>
           )}
-        </div>
 
-        <div className="card p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Historial de seguimiento
-          </h2>
-          {data.contacts.length === 0 ? (
-            <p className="text-sm text-slate-500">Aún no se ha registrado ningún contacto.</p>
-          ) : (
-            <ul className="space-y-3">
-              {data.contacts.map((c) => (
-                <li key={c.id} className="border-b border-slate-100 pb-3 text-sm last:border-0">
-                  <p className="font-medium text-slate-900">
-                    {CONTACT_TYPE_LABELS[c.type]} — {CONTACT_RESULT_LABELS[c.result]}
+          <section>
+            <h2 className="section-title">Acudiente</h2>
+            {data.guardian ? (
+              <div className="card flex items-center gap-3 p-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                  <Icon name="user" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-slate-900">{data.guardian.name}</p>
+                  <p className="text-[13px] text-slate-500">
+                    {data.guardian.relationship} · {data.guardian.phone}
                   </p>
-                  <p className="text-xs text-slate-400">
-                    {formatDateTimeEs(c.contactDate)} · {c.gestorName}
-                  </p>
-                  {c.observation && <p className="mt-1 text-slate-600">{c.observation}</p>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
+                </div>
+                <a href={`tel:${data.guardian.phone.replace(/[^\d+]/g, "")}`} className="btn-primary shrink-0 px-4">
+                  <Icon name="phone" className="h-[18px] w-[18px]" />
+                  Llamar
+                </a>
+              </div>
+            ) : (
+              <div className="card p-4 text-[15px] text-slate-500">Este estudiante no tiene acudiente registrado.</div>
+            )}
+          </section>
 
-      <div>
-        <CaseActions caseId={data.id} currentStatus={data.status} />
+          <section className="lg:hidden">
+            <CaseActions key={data.status} caseId={data.id} currentStatus={data.status} />
+          </section>
+
+          <section>
+            <h2 className="section-title">Historial de contactos ({data.contacts.length})</h2>
+            {data.contacts.length === 0 ? (
+              <div className="card p-4 text-[15px] text-slate-500">Aún no se ha registrado ningún contacto.</div>
+            ) : (
+              <ol className="list-group">
+                {data.contacts.map((c) => (
+                  <li key={c.id} className="px-4 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-semibold text-slate-900">{CONTACT_RESULT[c.result] ?? c.result}</p>
+                      <span className="shrink-0 text-[12px] text-slate-400">{formatDateTimeEs(c.contactDate)}</span>
+                    </div>
+                    <p className="text-[13px] text-slate-500">
+                      {CONTACT_TYPE[c.type] ?? c.type} · {c.gestorName}
+                    </p>
+                    {c.observation && <p className="mt-1.5 text-[15px] text-slate-700">{c.observation}</p>}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
+          <section>
+            <h2 className="section-title">Ausencias y novedades ({data.attendanceHistory.length})</h2>
+            {data.attendanceHistory.length === 0 ? (
+              <div className="card p-4 text-[15px] text-slate-500">Sin novedades registradas.</div>
+            ) : (
+              <ul className="list-group">
+                {data.attendanceHistory.map((h, i) => {
+                  const st = labelOf(ATTENDANCE_STATUS, h.status);
+                  return (
+                    <li key={i} className="list-row">
+                      <span className="w-20 shrink-0 text-[13px] font-medium text-slate-500">
+                        {formatShortDateOnlyEs(h.date)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-slate-900">{h.subjectName}</p>
+                        <p className="truncate text-[13px] text-slate-500">{h.teacherName}</p>
+                      </div>
+                      <Badge tone={st.tone}>{st.label}</Badge>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-20">
+            <CaseActions key={data.status} caseId={data.id} currentStatus={data.status} />
+          </div>
+        </aside>
       </div>
     </div>
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div>
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="font-medium text-slate-900">{value}</p>
+    <div className="card p-3.5">
+      <p className="text-[12px] font-medium text-slate-500">{label}</p>
+      <p className={`mt-1 text-[20px] font-bold tabular-nums tracking-tight ${tone ?? "text-slate-900"}`}>{value}</p>
     </div>
   );
 }

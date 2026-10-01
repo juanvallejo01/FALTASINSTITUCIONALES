@@ -1,5 +1,10 @@
+import Link from "next/link";
 import { requirePageRole, scopedInstitutionId } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import { JORNADA } from "@/lib/labels";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Icon } from "@/components/ui/Icon";
 
 export default async function CursosPage() {
   const session = await requirePageRole("COORDINADOR");
@@ -13,29 +18,30 @@ export default async function CursosPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-lg font-semibold text-slate-900">Cursos</h1>
-      <div className="card overflow-x-auto">
-        <table className="w-full min-w-[480px] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2.5">Curso</th>
-              <th className="px-4 py-2.5">Sede</th>
-              <th className="px-4 py-2.5">Jornada</th>
-              <th className="px-4 py-2.5 text-right">Estudiantes</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {courses.map((c) => (
-              <tr key={c.id}>
-                <td className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
-                <td className="px-4 py-2.5">{c.campus.name}</td>
-                <td className="px-4 py-2.5">{c.jornada}</td>
-                <td className="px-4 py-2.5 text-right">{c._count.students}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <PageHeader title="Cursos" subtitle={`${courses.length} cursos activos`} />
+      {courses.length === 0 ? (
+        <EmptyState icon="book" title="No hay cursos activos" />
+      ) : (
+        <ul className="list-group">
+          {courses.map((c) => (
+            <li key={c.id}>
+              <Link href={`/dashboard/coordinacion/estudiantes?courseId=${c.id}`} className="list-row">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-[14px] font-bold text-brand-700">
+                  {c.name}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-slate-900">Curso {c.name}</p>
+                  <p className="truncate text-[13px] text-slate-500">
+                    {c.campus.name} · Jornada {JORNADA[c.jornada]?.toLowerCase() ?? c.jornada}
+                  </p>
+                </div>
+                <span className="text-[13px] tabular-nums text-slate-500">{c._count.students} estudiantes</span>
+                <Icon name="chevron-right" className="h-4 w-4 text-slate-300" strokeWidth={2.2} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

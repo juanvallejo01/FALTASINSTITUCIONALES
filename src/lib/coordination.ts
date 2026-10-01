@@ -56,8 +56,6 @@ export async function getTodayClassesForInstitution(
 }
 
 export async function getGlobalOverview() {
-  const today = todayDateOnlyUtc();
-
   const [institutionCount, studentCount, teacherCount, courseCount, openAlerts, pendingCases] =
     await Promise.all([
       prisma.institution.count({ where: { status: "ACTIVE" } }),
@@ -67,11 +65,6 @@ export async function getGlobalOverview() {
       prisma.alert.count({ where: { status: "ABIERTA" } }),
       prisma.followUpCase.count({ where: { status: { in: ["PENDIENTE", "EN_GESTION"] } } }),
     ]);
-
-  const [sessionsToday, registeredToday] = await Promise.all([
-    prisma.attendanceSession.count({ where: { date: today } }),
-    prisma.attendanceSession.count({ where: { date: today, status: "REGISTRADA" } }),
-  ]);
 
   // Se evita SQL crudo a propósito (ver sección 36 del spec, prevención de
   // inyección SQL): se reutiliza la misma lógica de horario que ya usa
@@ -84,9 +77,15 @@ export async function getGlobalOverview() {
     activeInstitutions.map(async (inst) => {
       const classes = await getTodayClassesForInstitution(inst.id);
       const pending = classes.filter((c) => c.status === "PENDIENTE").length;
-      return { institutionId: inst.id, name: inst.name, pending };
+      return { institutionId: inst.id, name: inst.name, pending, total: classes.length };
     }),
   );
+
+  // Las clases de hoy salen del horario (igual que en cada institución), no solo de
+  // las sesiones ya abiertas por un docente; si no, el total global no cuadraba con
+  // la suma de los pendientes por institución.
+  const sessionsToday = pendingPerInstitution.reduce((sum, r) => sum + r.total, 0);
+  const pendingToday = pendingPerInstitution.reduce((sum, r) => sum + r.pending, 0);
 
   return {
     institutionCount,
@@ -94,8 +93,8 @@ export async function getGlobalOverview() {
     teacherCount,
     courseCount,
     sessionsToday,
-    registeredToday,
-    pendingToday: sessionsToday - registeredToday,
+    registeredToday: sessionsToday - pendingToday,
+    pendingToday,
     openAlerts,
     pendingCases,
     institutionsWithPending: pendingPerInstitution

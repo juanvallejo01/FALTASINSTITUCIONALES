@@ -42,12 +42,15 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card space-y-3 p-6 text-sm">
-      <h2 className="text-base font-semibold text-slate-900">Cambiar contraseña</h2>
+    <form onSubmit={handleSubmit} className="card space-y-4 p-4">
       <div>
-        <label className="label">Contraseña actual</label>
+        <label className="label" htmlFor="current-password">
+          Contraseña actual
+        </label>
         <input
+          id="current-password"
           type="password"
+          autoComplete="current-password"
           required
           className="input"
           value={currentPassword}
@@ -55,9 +58,13 @@ export function ChangePasswordForm() {
         />
       </div>
       <div>
-        <label className="label">Nueva contraseña</label>
+        <label className="label" htmlFor="new-password">
+          Nueva contraseña
+        </label>
         <input
+          id="new-password"
           type="password"
+          autoComplete="new-password"
           required
           minLength={8}
           className="input"
@@ -66,9 +73,13 @@ export function ChangePasswordForm() {
         />
       </div>
       <div>
-        <label className="label">Confirmar nueva contraseña</label>
+        <label className="label" htmlFor="confirm-password">
+          Confirmar nueva contraseña
+        </label>
         <input
+          id="confirm-password"
           type="password"
+          autoComplete="new-password"
           required
           minLength={8}
           className="input"
@@ -76,9 +87,13 @@ export function ChangePasswordForm() {
           onChange={(e) => setConfirm(e.target.value)}
         />
       </div>
-      {error && <p className="text-red-600">{error}</p>}
-      {success && <p className="text-emerald-600">Contraseña actualizada correctamente.</p>}
-      <button type="submit" disabled={loading} className="btn-primary">
+      {error && (
+        <p role="alert" className="text-[14px] text-red-600">
+          {error}
+        </p>
+      )}
+      {success && <p className="text-[14px] text-emerald-600">Contraseña actualizada correctamente.</p>}
+      <button type="submit" disabled={loading} className="btn-primary w-full">
         {loading ? "Guardando..." : "Cambiar contraseña"}
       </button>
     </form>

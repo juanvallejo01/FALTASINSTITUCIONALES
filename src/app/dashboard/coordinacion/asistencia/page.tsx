@@ -1,6 +1,11 @@
 import { requirePageRole, scopedInstitutionId } from "@/lib/rbac";
 import { getTodayClassesForInstitution } from "@/lib/coordination";
-import { formatDateEs, formatDateTimeEs } from "@/lib/tz";
+import { formatLongDateEs, formatTimeEs } from "@/lib/tz";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Icon } from "@/components/ui/Icon";
+
+type ClassRow = Awaited<ReturnType<typeof getTodayClassesForInstitution>>[number];
 
 export default async function AsistenciaHoyPage() {
   const session = await requirePageRole("COORDINADOR");
@@ -11,87 +16,77 @@ export default async function AsistenciaHoyPage() {
   const registered = classes.filter((c) => c.status === "REGISTRADA");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-900">Asistencia de hoy</h1>
-        <p className="text-sm text-slate-500">{formatDateEs(new Date())}</p>
-      </div>
+    <div>
+      <PageHeader title="Asistencia de hoy" subtitle={formatLongDateEs()} />
 
       {classes.length === 0 ? (
-        <div className="card p-6 text-sm text-slate-500">No hay clases programadas para hoy.</div>
+        <EmptyState icon="calendar" title="No hay clases programadas hoy" />
       ) : (
-        <>
+        <div className="space-y-8">
+          <div className="card p-4">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[17px] font-semibold text-slate-900">
+                {registered.length} de {classes.length} clases registradas
+              </p>
+              <p className="text-[13px] text-slate-500">{Math.round((registered.length / classes.length) * 100)}%</p>
+            </div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-emerald-500"
+                style={{ width: `${(registered.length / classes.length) * 100}%` }}
+              />
+            </div>
+          </div>
+
           <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-red-600">
-              Docentes pendientes ({pending.length})
-            </h2>
+            <h2 className="section-title">Sin registrar ({pending.length})</h2>
             {pending.length === 0 ? (
-              <div className="card p-4 text-sm text-emerald-700">
-                Todos los docentes han registrado asistencia hoy.
-              </div>
+              <EmptyState tone="success" title="Todos los docentes registraron asistencia hoy" />
             ) : (
-              <ClassTable rows={pending} />
+              <ClassList rows={pending} />
             )}
           </section>
 
-          <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-600">
-              Registradas ({registered.length})
-            </h2>
-            <ClassTable rows={registered} />
-          </section>
-        </>
+          {registered.length > 0 && (
+            <section>
+              <h2 className="section-title">Registradas ({registered.length})</h2>
+              <ClassList rows={registered} />
+            </section>
+          )}
+        </div>
       )}
     </div>
   );
 }
 
-function ClassTable({
-  rows,
-}: {
-  rows: Awaited<ReturnType<typeof getTodayClassesForInstitution>>;
-}) {
-  if (rows.length === 0) {
-    return <div className="card p-4 text-sm text-slate-500">Sin registros.</div>;
-  }
+function ClassList({ rows }: { rows: ClassRow[] }) {
   return (
-    <div className="card overflow-x-auto">
-      <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-          <tr>
-            <th className="px-4 py-2.5">Hora</th>
-            <th className="px-4 py-2.5">Curso</th>
-            <th className="px-4 py-2.5">Materia</th>
-            <th className="px-4 py-2.5">Docente</th>
-            <th className="px-4 py-2.5">Estado</th>
-            <th className="px-4 py-2.5">Registrada</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {rows.map((r) => (
-            <tr key={r.assignmentId}>
-              <td className="px-4 py-2.5">{r.startTime}</td>
-              <td className="px-4 py-2.5">{r.courseName}</td>
-              <td className="px-4 py-2.5">{r.subjectName}</td>
-              <td className="px-4 py-2.5">{r.teacherName}</td>
-              <td className="px-4 py-2.5">
-                <span
-                  className={`badge ${
-                    r.status === "REGISTRADA"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-red-50 text-red-700"
-                  }`}
-                >
-                  {r.status === "REGISTRADA" ? "Registrada" : "Pendiente"}
-                </span>
-              </td>
-              <td className="px-4 py-2.5 text-slate-500">
-                {r.registeredAt ? formatDateTimeEs(r.registeredAt) : "—"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ul className="list-group">
+      {rows.map((r) => {
+        const done = r.status === "REGISTRADA";
+        return (
+          <li key={r.assignmentId} className="list-row">
+            <span className="w-12 shrink-0 text-[15px] font-semibold tabular-nums text-slate-900">{r.startTime}</span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-slate-900">
+                {r.courseName} · {r.subjectName}
+              </p>
+              <p className="truncate text-[13px] text-slate-500">
+                {r.teacherName}
+                {done && r.registeredAt ? ` · registrada ${formatTimeEs(r.registeredAt)}` : ""}
+              </p>
+            </div>
+            <span
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                done ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
+              }`}
+              title={done ? "Registrada" : "Pendiente"}
+            >
+              <Icon name={done ? "check" : "clock"} className="h-4 w-4" strokeWidth={2.4} />
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
